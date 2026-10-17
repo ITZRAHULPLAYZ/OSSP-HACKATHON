@@ -980,12 +980,6 @@ async function runRealCBenchmark() {
       `).join('');
 
       dom.benchmarkTableBody.innerHTML = tbodyHtml;
-      dom.benchmarkInsights.innerHTML = `
-        <strong>⚡ RESULTS FROM REAL C BINARY (scheduler.exe):</strong><br>
-        &bull; <strong>Source:</strong> Compiled MinGW-w64 C binary with <code>--compare --json</code>.<br>
-        &bull; <strong>Anti-Starvation Aging:</strong> Native C aging engine rescued starving processes and boosted dynamic priorities.<br>
-        &bull; <strong>MLFQ:</strong> Dynamically tuned multi-level feedback queue delivers high throughput with starvation guarantees.
-      `;
       engine.log(`Executed real C binary benchmark (scheduler.exe). Results loaded.`);
       renderLog();
     }
@@ -1016,15 +1010,6 @@ function runAndDisplayBenchmark() {
   `).join('');
 
   dom.benchmarkTableBody.innerHTML = tbodyHtml;
-
-  dom.benchmarkInsights.innerHTML = `
-    <strong>KERNEL INSIGHT &amp; EVALUATION:</strong><br>
-    &bull; <strong>MLFQ with Dynamic Priority Aging</strong> prevents starvation events from stalling low-priority processes by promoting them to Queue 0 after 18 ticks of starvation.<br>
-    &bull; <strong>Round Robin (RR)</strong> ensures fairness but yields higher turnaround times for CPU-bound processes.<br>
-    &bull; <strong>Preemptive Priority (PRI)</strong> without aging would result in severe starvation; our dynamic aging engine successfully rescues starved processes.<br>
-    &bull; <strong>SRTF</strong> minimizes average turnaround time, with our anti-starvation aging safeguard preventing starvation of long-burst jobs.<br>
-    &bull; Click <strong>"EXECUTE REAL C BINARY"</strong> below to run the compiled <code>scheduler.exe</code> directly!
-  `;
 }
 
 // ── Backend Health Check ──
