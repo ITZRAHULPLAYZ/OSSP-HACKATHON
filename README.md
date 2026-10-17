@@ -96,6 +96,17 @@ REM Run tests
 build.bat test
 ```
 
+### 🌐 Interactive Web Visualizer (High-Contrast B&W)
+
+A modern, high-contrast black-and-white web dashboard that visualizes MLFQ queue movements, real-time Gantt timeline, anti-starvation aging events, and side-by-side algorithm benchmarks in your browser:
+
+- **One-Click Run (Windows)**: Double-click [run_frontend.bat](file:///C:/Users/rahuuuu/.gemini/antigravity-ide/scratch/cpu_scheduler/run_frontend.bat)
+- **Manual Launch**:
+  ```bash
+  python -m http.server 8765 --directory frontend
+  ```
+  Then navigate to: **`http://localhost:8765`**
+
 ---
 
 ## 🎮 CLI Options
