@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=3.1">
+  <link rel="stylesheet" href="style.css?v=3.2">
 </head>
 <body class="theme-bw">
   <div class="app-shell">
@@ -198,16 +198,11 @@
           <table class="clean-table">
             <thead>
               <tr>
-                <th>PID</th>
-                <th>PROCESS NAME</th>
-                <th>TYPE</th>
-                <th>ARRIVAL</th>
-                <th>BURST</th>
-                <th>REMAIN</th>
-                <th>DYNAMIC / STATIC PRI</th>
-                <th>AGE (WAIT)</th>
-                <th>STARVATIONS</th>
-                <th>STATUS</th>
+                <th>PROCESS &amp; TYPE</th>
+                <th>PROGRESS &amp; REMAINING</th>
+                <th>DYNAMIC PRIORITY</th>
+                <th>WAIT &amp; STARVATION (18T LIMIT)</th>
+                <th>KERNEL STATE</th>
               </tr>
             </thead>
             <tbody id="pcbTableBody">
@@ -338,6 +333,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=3.1"></script>
+  <script src="app.js?v=3.2"></script>
 </body>
 </html>

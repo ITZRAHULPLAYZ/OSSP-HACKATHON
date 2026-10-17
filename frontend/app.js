@@ -741,19 +741,52 @@ function renderPCBTable() {
     else if (p.state === 'TERMINATED') doneCount++;
 
     const isRunning = engine.runningProc === p;
-    const priDisplay = `${p.dynamicPriority} / ${p.staticPriority}`;
+    const isBoosted = p.dynamicPriority > p.staticPriority;
+    const isPenalized = p.dynamicPriority < p.staticPriority;
+    const pctDone = Math.min(100, Math.max(0, Math.round(((p.burstTime - p.remainingBurst) / p.burstTime) * 100)));
+
+    let priBadge = '';
+    if (isBoosted) {
+      priBadge = `<span class="badge-aged" style="margin-left:6px;">▲ +${p.dynamicPriority - p.staticPriority} AGED</span>`;
+    } else if (isPenalized) {
+      priBadge = `<span class="badge-penalty" style="margin-left:6px;">▼ -${p.staticPriority - p.dynamicPriority} CPU</span>`;
+    }
+
+    const isStarving = p.age >= CONFIG.STARVATION_THRESHOLD - 4 && p.state === 'READY';
 
     return `
       <tr class="${isRunning ? 'row-running' : ''}">
-        <td><strong>P${p.pid}</strong></td>
-        <td>${p.name}</td>
-        <td>${p.type}</td>
-        <td>${p.arrivalTime}t</td>
-        <td>${p.burstTime}t</td>
-        <td>${p.remainingBurst}t</td>
-        <td><strong>${priDisplay}</strong></td>
-        <td>${p.age}t (${p.waitTime}t)</td>
-        <td>${p.starvationCount > 0 ? `<strong>${p.starvationCount}</strong>` : '0'}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="card-pid">P${p.pid}</span>
+            <div>
+              <strong>${p.name}</strong>
+              <div style="font-size:10px; color:var(--text-muted);">${p.type} &bull; Arrived @ ${p.arrivalTime}t</div>
+            </div>
+          </div>
+        </td>
+        <td style="min-width:140px;">
+          <div style="font-size:11px; margin-bottom:4px; display:flex; justify-content:space-between;">
+            <span>${p.remainingBurst}t remain</span>
+            <span style="color:var(--text-muted);">${pctDone}%</span>
+          </div>
+          <div class="mini-progress-bar">
+            <div class="mini-progress-fill" style="width:${pctDone}%"></div>
+          </div>
+        </td>
+        <td>
+          <div style="display:flex; align-items:center;">
+            <strong>PRI: ${p.dynamicPriority}</strong>
+            <span style="font-size:10px; color:var(--text-muted); margin-left:4px;">(Base: ${p.staticPriority})</span>
+            ${priBadge}
+          </div>
+        </td>
+        <td>
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <div>Wait: <strong>${p.waitTime}t</strong> &bull; Age: <strong style="${isStarving ? 'color:#fff; text-decoration:underline;' : ''}">${p.age}t/18t</strong></div>
+            ${p.starvationCount > 0 ? `<div style="font-size:10px; font-weight:800; color:#fff;">RESCUED ${p.starvationCount}x VIA AGING</div>` : ''}
+          </div>
+        </td>
         <td><span class="status-badge status-${p.state}">${p.state}</span></td>
       </tr>
     `;
