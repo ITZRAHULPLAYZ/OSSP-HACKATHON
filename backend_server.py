@@ -14,7 +14,7 @@ import os
 import sys
 import json
 import subprocess
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 PORT = 8765
@@ -110,8 +110,9 @@ class SchedulerAPIHandler(SimpleHTTPRequestHandler):
 
 def run():
     server_address = ("", PORT)
-    httpd = HTTPServer(server_address, SchedulerAPIHandler)
-    print(f"[+] Smart CPU Scheduler Backend running on http://localhost:{PORT}")
+    httpd = ThreadingHTTPServer(server_address, SchedulerAPIHandler)
+    httpd.daemon_threads = True
+    print(f"[+] Smart CPU Scheduler Multi-Threaded Backend running on http://localhost:{PORT}")
     print(f"[+] Connected C Binary: {BINARY_PATH} ({'FOUND' if os.path.isfile(BINARY_PATH) else 'MISSING'})")
     httpd.serve_forever()
 
