@@ -576,6 +576,8 @@ const dom = {
   btnCancelAddModal: document.getElementById('btnCancelAddModal'),
   formAddProc: document.getElementById('formAddProc'),
 
+  backendBadge: document.getElementById('backendBadge'),
+  btnRunCBench: document.getElementById('btnRunCBench'),
   btnRunBenchmark: document.getElementById('btnRunBenchmark'),
   modalBenchmark: document.getElementById('modalBenchmark'),
   btnCloseBenchModal: document.getElementById('btnCloseBenchModal'),
@@ -593,23 +595,23 @@ function getProcPatternClass(pid) {
 // ── Render Function ──
 function renderUI() {
   // 1. Header Telemetry
-  dom.headerTick.textContent = String(engine.tick).padStart(3, '0');
-  dom.headerAlgo.textContent = engine.algorithm.toUpperCase();
-  if (engine.runningProc) {
-    dom.headerCpuState.textContent = `BUSY [P${engine.runningProc.pid}]`;
-    dom.headerCpuState.className = 'telemetry-val state-active';
-  } else {
-    dom.headerCpuState.textContent = 'IDLE';
-    dom.headerCpuState.className = 'telemetry-val state-idle';
+  if (dom.headerTick) dom.headerTick.textContent = String(engine.tick).padStart(3, '0');
+  if (dom.headerAlgo) dom.headerAlgo.textContent = engine.algorithm.toUpperCase();
+  if (dom.headerCpuState) {
+    if (engine.runningProc) {
+      dom.headerCpuState.textContent = `BUSY [P${engine.runningProc.pid}]`;
+    } else {
+      dom.headerCpuState.textContent = 'IDLE';
+    }
   }
 
   // 2. Play / Pause Button state
   if (engine.running) {
-    dom.playIcon.textContent = '⏸';
-    dom.playText.textContent = 'PAUSE';
+    if (dom.playIcon) dom.playIcon.textContent = '⏸';
+    if (dom.playText) dom.playText.textContent = 'PAUSE';
   } else {
-    dom.playIcon.textContent = '▶';
-    dom.playText.textContent = 'RUN';
+    if (dom.playIcon) dom.playIcon.textContent = '▶';
+    if (dom.playText) dom.playText.textContent = 'RUN';
   }
 
   // 3. CPU Core Active Card
@@ -617,22 +619,22 @@ function renderUI() {
     const p = engine.runningProc;
     const patClass = getProcPatternClass(p.pid);
     dom.cpuRunningCard.innerHTML = `
-      <div class="active-proc-card ${patClass}">
+      <div class="active-proc-badge ${patClass}">
         <div class="active-proc-title">
           <span>P${p.pid} &bull; ${p.name}</span>
-          <span class="active-proc-tag">RUNNING</span>
+          <span style="font-size:10px; background:#fff; color:#000; padding:1px 5px; font-weight:800;">RUNNING</span>
         </div>
         <div class="active-proc-meta">
-          DYN PRI: <strong>${p.dynamicPriority}</strong> (STAT: ${p.staticPriority}) &bull; ${p.type}
+          PRI: ${p.dynamicPriority} (STAT: ${p.staticPriority}) &bull; ${p.type}
         </div>
       </div>
     `;
     dom.coreBurstRemaining.textContent = `${p.remainingBurst}t / ${p.burstTime}t`;
     dom.coreQuantumRemaining.textContent = engine.algorithm === 'mlfq' || engine.algorithm === 'rr'
       ? `${p.currentQuantumRemaining}t`
-      : 'N/A (Preemptive)';
+      : 'N/A';
   } else {
-    dom.cpuRunningCard.innerHTML = `<div class="core-idle-msg">[ CPU CORE IDLE // NO PROCESS ]</div>`;
+    dom.cpuRunningCard.innerHTML = `<div class="core-idle-msg">IDLE</div>`;
     dom.coreBurstRemaining.textContent = '--';
     dom.coreQuantumRemaining.textContent = '--';
   }
@@ -676,51 +678,52 @@ function renderGantt() {
     axisHtml += `<div class="gantt-axis-label">${item.tick}</div>`;
   });
 
-  dom.ganttTimeline.innerHTML = cellsHtml || '<div class="empty-lane-hint">No ticks recorded yet</div>';
+  dom.ganttTimeline.innerHTML = cellsHtml || '<div class="empty-hint">Waiting for simulation ticks...</div>';
   dom.ganttAxis.innerHTML = axisHtml;
 }
 
 function renderQueues() {
   if (engine.algorithm === 'mlfq') {
-    dom.mlfqQueuesContainer.style.display = 'grid';
-    dom.singleQueueContainer.style.display = 'none';
-    dom.queueViewTitle.textContent = 'MLFQ MULTI-LEVEL FEEDBACK QUEUES (4 LEVELS)';
+    if (dom.mlfqQueuesContainer) dom.mlfqQueuesContainer.style.display = 'grid';
+    if (dom.singleQueueContainer) dom.singleQueueContainer.style.display = 'none';
 
     const lanes = [dom.laneQ0, dom.laneQ1, dom.laneQ2, dom.laneQ3];
     lanes.forEach((laneEl, idx) => {
+      if (!laneEl) return;
       const q = engine.mlfqQueues[idx];
       if (q.length === 0) {
-        laneEl.innerHTML = '<div class="empty-lane-hint">Empty</div>';
+        laneEl.innerHTML = '<div class="empty-hint">Empty</div>';
       } else {
         laneEl.innerHTML = q.map(p => createQueueProcPill(p)).join('');
       }
     });
   } else {
-    dom.mlfqQueuesContainer.style.display = 'none';
-    dom.singleQueueContainer.style.display = 'block';
-    dom.queueViewTitle.textContent = `${engine.algorithm.toUpperCase()} READY QUEUE`;
+    if (dom.mlfqQueuesContainer) dom.mlfqQueuesContainer.style.display = 'none';
+    if (dom.singleQueueContainer) dom.singleQueueContainer.style.display = 'block';
+    if (dom.singleQueueTitle) dom.singleQueueTitle.textContent = `${engine.algorithm.toUpperCase()} READY QUEUE`;
 
-    if (engine.readyQueue.length === 0) {
-      dom.singleQueueSlots.innerHTML = '<div class="empty-lane-hint">Ready queue is empty</div>';
-    } else {
-      dom.singleQueueSlots.innerHTML = engine.readyQueue.map(p => createQueueProcPill(p)).join('');
+    if (dom.singleQueueSlots) {
+      if (engine.readyQueue.length === 0) {
+        dom.singleQueueSlots.innerHTML = '<div class="empty-hint">Ready queue is empty</div>';
+      } else {
+        dom.singleQueueSlots.innerHTML = engine.readyQueue.map(p => createQueueProcPill(p)).join('');
+      }
     }
   }
 }
 
 function createQueueProcPill(p) {
-  const isAgedWarning = p.age >= CONFIG.STARVATION_THRESHOLD - 4;
   const isAgedTriggered = p.starvationCount > 0;
   return `
-    <div class="q-proc-pill ${isAgedWarning ? 'aged-warning' : ''}" title="Age: ${p.age}t, Static Pri: ${p.staticPriority}, Dynamic Pri: ${p.dynamicPriority}">
-      <div class="q-proc-left">
-        <span class="q-proc-pid">P${p.pid}</span>
-        <span class="q-proc-name">${p.name}</span>
+    <div class="clean-proc-card ${isAgedTriggered ? 'aged-boost' : ''}" title="Dynamic Pri: ${p.dynamicPriority}, Wait: ${p.waitTime}t">
+      <div>
+        <span class="card-pid">P${p.pid}</span>
+        <strong>${p.name}</strong>
       </div>
-      <div class="q-proc-right">
+      <div>
         <span>Pri: <strong>${p.dynamicPriority}</strong></span>
-        <span>Age: <strong>${p.age}t</strong></span>
-        ${isAgedTriggered ? '<span class="badge-aged">AGED</span>' : ''}
+        <span style="margin-left:6px;">Age: <strong>${p.age}t</strong></span>
+        ${isAgedTriggered ? '<span class="card-tag">AGED</span>' : ''}
       </div>
     </div>
   `;
@@ -738,7 +741,6 @@ function renderPCBTable() {
     else if (p.state === 'TERMINATED') doneCount++;
 
     const isRunning = engine.runningProc === p;
-    const isBoosted = p.dynamicPriority > p.staticPriority;
     const priDisplay = `${p.dynamicPriority} / ${p.staticPriority}`;
 
     return `
@@ -749,10 +751,10 @@ function renderPCBTable() {
         <td>${p.arrivalTime}t</td>
         <td>${p.burstTime}t</td>
         <td>${p.remainingBurst}t</td>
-        <td class="${isBoosted ? 'dyn-pri-boosted' : ''}">${priDisplay}</td>
+        <td><strong>${priDisplay}</strong></td>
         <td>${p.age}t (${p.waitTime}t)</td>
         <td>${p.starvationCount > 0 ? `<strong>${p.starvationCount}</strong>` : '0'}</td>
-        <td><span class="pcb-state-badge state-${p.state}">${p.state}</span></td>
+        <td><span class="status-badge status-${p.state}">${p.state}</span></td>
       </tr>
     `;
   }).join('');
@@ -905,11 +907,66 @@ dom.btnReRunBench.addEventListener('click', () => {
   runAndDisplayBenchmark();
 });
 
+if (dom.btnRunCBench) {
+  dom.btnRunCBench.addEventListener('click', () => {
+    runRealCBenchmark();
+  });
+}
+
 const closeBenchModal = () => {
   dom.modalBenchmark.style.display = 'none';
 };
 dom.btnCloseBenchModal.addEventListener('click', closeBenchModal);
 dom.btnCloseBenchBtn.addEventListener('click', closeBenchModal);
+
+async function runRealCBenchmark() {
+  dom.benchmarkTableBody.innerHTML = `
+    <tr>
+      <td colspan="7" style="text-align:center; padding: 20px; font-weight:800;">
+        ⚡ EXECUTING NATIVE C BINARY (scheduler.exe --compare --json)...
+      </td>
+    </tr>
+  `;
+
+  try {
+    const res = await fetch(`/api/c-compare?procs=${engine.allProcesses.length}&ticks=120`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    if (data.comparison) {
+      const tbodyHtml = data.comparison.map(r => `
+        <tr class="${r.algo.includes('MLFQ') ? 'row-running' : ''}">
+          <td><strong>${r.algo}</strong></td>
+          <td>${r.avg_wait} ticks</td>
+          <td>${r.avg_tat} ticks</td>
+          <td>${r.cpu_util}%</td>
+          <td><strong>${r.starvations}</strong></td>
+          <td>${r.promotions}</td>
+          <td>${r.algo.includes('MLFQ') ? '<strong>NATIVE C OPTIMAL</strong>' : 'C BASELINE'}</td>
+        </tr>
+      `).join('');
+
+      dom.benchmarkTableBody.innerHTML = tbodyHtml;
+      dom.benchmarkInsights.innerHTML = `
+        <strong>⚡ RESULTS FROM REAL C BINARY (scheduler.exe):</strong><br>
+        &bull; <strong>Source:</strong> Compiled MinGW-w64 C binary with <code>--compare --json</code>.<br>
+        &bull; <strong>Anti-Starvation Aging:</strong> Native C aging engine rescued starving processes and boosted dynamic priorities.<br>
+        &bull; <strong>MLFQ:</strong> Dynamically tuned multi-level feedback queue delivers high throughput with starvation guarantees.
+      `;
+      engine.log(`Executed real C binary benchmark (scheduler.exe). Results loaded.`);
+      renderLog();
+    }
+  } catch (err) {
+    dom.benchmarkTableBody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align:center; padding: 14px; color: #ff6666;">
+          Backend API unreachable. Falling back to internal engine...
+        </td>
+      </tr>
+    `;
+    setTimeout(runAndDisplayBenchmark, 1000);
+  }
+}
 
 function runAndDisplayBenchmark() {
   const results = engine.runBenchmark();
@@ -932,12 +989,47 @@ function runAndDisplayBenchmark() {
     &bull; <strong>MLFQ with Dynamic Priority Aging</strong> prevents starvation events from stalling low-priority processes by promoting them to Queue 0 after 18 ticks of starvation.<br>
     &bull; <strong>Round Robin (RR)</strong> ensures fairness but yields higher turnaround times for CPU-bound processes.<br>
     &bull; <strong>Preemptive Priority (PRI)</strong> without aging would result in severe starvation; our dynamic aging engine successfully rescues starved processes.<br>
-    &bull; <strong>SRTF</strong> minimizes average turnaround time, with our anti-starvation aging safeguard preventing starvation of long-burst jobs.
+    &bull; <strong>SRTF</strong> minimizes average turnaround time, with our anti-starvation aging safeguard preventing starvation of long-burst jobs.<br>
+    &bull; Click <strong>"EXECUTE REAL C BINARY"</strong> below to run the compiled <code>scheduler.exe</code> directly!
   `;
+}
+
+// ── Backend Health Check ──
+async function checkBackendConnection() {
+  try {
+    const res = await fetch('/api/status', { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (dom.backendBadge) {
+        dom.backendBadge.textContent = 'ONLINE (C-CORE)';
+        dom.backendBadge.style.color = '#ffffff';
+        dom.backendBadge.style.fontWeight = '800';
+      }
+      engine.log(`Connected to C Backend Server (scheduler.exe online).`);
+      renderLog();
+    }
+  } catch (e) {
+    if (dom.backendBadge) {
+      dom.backendBadge.textContent = 'STANDALONE';
+    }
+  }
 }
 
 // ── Initial Boot ──
 window.addEventListener('DOMContentLoaded', () => {
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const targetId = btn.getAttribute('data-tab');
+      const pane = document.getElementById(targetId);
+      if (pane) pane.classList.add('active');
+    });
+  });
+
   engine.loadWorkload(PRESETS.mixed);
   renderUI();
+  checkBackendConnection();
 });

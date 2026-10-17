@@ -3,397 +3,341 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart CPU Scheduler // Dynamic Priority Engine</title>
-  <meta name="description" content="High-contrast interactive visualizer and simulator for Smart CPU Scheduler with Dynamic Priority Adjustment and Anti-Starvation Aging.">
+  <title>Smart CPU Scheduler // C-Engine Visualizer</title>
+  <meta name="description" content="Minimalist high-contrast visualizer for Smart CPU Scheduler with Dynamic Priority Adjustment and C Backend.">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=3.1">
 </head>
 <body class="theme-bw">
-  <header class="sys-header">
-    <div class="header-left">
-      <div class="sys-badge">OS KERNEL SIMULATOR</div>
-      <h1 class="sys-title">SMART CPU SCHEDULER</h1>
-      <span class="sys-subtitle">DYNAMIC PRIORITY ADJUSTMENT // ANTI-STARVATION AGING</span>
-    </div>
-    <div class="header-right">
-      <div class="telemetry-pill">
-        <span class="telemetry-label">TICK</span>
-        <span id="headerTick" class="telemetry-val">000</span>
+  <div class="app-shell">
+    <!-- MINIMAL HEADER -->
+    <header class="sys-header">
+      <div class="header-left">
+        <h1 class="sys-title">SMART CPU SCHEDULER</h1>
+        <span class="sys-subtitle">DYNAMIC PRIORITY &bull; ANTI-STARVATION AGING &bull; C-CORE ENGINE</span>
       </div>
-      <div class="telemetry-pill">
-        <span class="telemetry-label">ALGO</span>
-        <span id="headerAlgo" class="telemetry-val">MLFQ</span>
-      </div>
-      <div class="telemetry-pill">
-        <span class="telemetry-label">CPU</span>
-        <span id="headerCpuState" class="telemetry-val state-idle">IDLE</span>
-      </div>
-      <a href="https://github.com/ITZRAHULPLAYZ/OSSP-HACKATHON" target="_blank" rel="noopener noreferrer" class="btn-github">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-        </svg>
-        GITHUB
-      </a>
-    </div>
-  </header>
-
-  <!-- CONTROL DECK -->
-  <section class="control-deck">
-    <div class="ctrl-group">
-      <button id="btnPlay" class="btn btn-primary" title="Start/Pause live execution">
-        <span id="playIcon">▶</span> <span id="playText">RUN</span>
-      </button>
-      <button id="btnStep" class="btn btn-outline" title="Advance by 1 clock tick">
-        STEP (+1T)
-      </button>
-      <button id="btnReset" class="btn btn-outline" title="Reset simulation">
-        RESET
-      </button>
-    </div>
-
-    <div class="ctrl-group">
-      <label class="ctrl-label" for="selectAlgo">ALGORITHM</label>
-      <select id="selectAlgo" class="form-select">
-        <option value="mlfq" selected>MLFQ (Multi-Level Feedback Queue)</option>
-        <option value="rr">Round Robin (RR)</option>
-        <option value="pri">Preemptive Priority (PRI)</option>
-        <option value="srtf">Shortest Remaining Time First (SRTF)</option>
-      </select>
-    </div>
-
-    <div class="ctrl-group">
-      <label class="ctrl-label" for="selectSpeed">CLOCK SPEED</label>
-      <select id="selectSpeed" class="form-select">
-        <option value="400">0.5x (Slow)</option>
-        <option value="180" selected>1.0x (Normal)</option>
-        <option value="80">2.5x (Fast)</option>
-        <option value="20">10x (Turbo)</option>
-      </select>
-    </div>
-
-    <div class="ctrl-group">
-      <label class="ctrl-label" for="selectWorkload">PRESET WORKLOAD</label>
-      <select id="selectWorkload" class="form-select">
-        <option value="mixed" selected>Standard Mixed (8 Procs - Starvation Demo)</option>
-        <option value="cpu_heavy">CPU Intensive (Heavy compute vs I/O)</option>
-        <option value="extreme_starvation">High Starvation Stress (Low-pri starved by hogs)</option>
-        <option value="quick">Quick Test (4 Procs)</option>
-      </select>
-    </div>
-
-    <div class="ctrl-group ctrl-actions">
-      <button id="btnOpenAddModal" class="btn btn-outline">
-        + ADD PROCESS
-      </button>
-      <button id="btnRunBenchmark" class="btn btn-invert" title="Compare all 4 algorithms side-by-side">
-        ⚡ COMPARE ALL
-      </button>
-    </div>
-  </section>
-
-  <!-- MAIN DASHBOARD GRID -->
-  <main class="dashboard-grid">
-    <!-- ROW 1: CPU CORE + GANTT TIMELINE -->
-    <div class="grid-card card-cpu-gantt">
-      <div class="card-header">
-        <div class="card-title">
-          <span class="icon-indicator">■</span> ACTIVE EXECUTION CORE & GANTT TIMELINE
+      <div class="header-right">
+        <div class="status-pill">
+          <span class="pill-dot"></span>
+          <span id="backendBadge" class="pill-text">PROBING C-CORE...</span>
         </div>
-        <div class="card-actions">
-          <span class="legend-item"><span class="swatch swatch-solid"></span> RUNNING</span>
-          <span class="legend-item"><span class="swatch swatch-hatch"></span> AGED / BOOSTED</span>
-          <span class="legend-item"><span class="swatch swatch-empty"></span> IDLE</span>
+        <div class="status-pill tick-pill">
+          <span class="pill-label">ALGO</span>
+          <span id="headerAlgo" class="pill-val">MLFQ</span>
+        </div>
+        <div class="status-pill tick-pill">
+          <span class="pill-label">CPU</span>
+          <span id="headerCpuState" class="pill-val">IDLE</span>
+        </div>
+        <div class="status-pill tick-pill">
+          <span class="pill-label">TICK</span>
+          <span id="headerTick" class="pill-val">000</span>
+        </div>
+        <a href="https://github.com/ITZRAHULPLAYZ/OSSP-HACKATHON" target="_blank" rel="noopener noreferrer" class="btn-github">
+          GITHUB
+        </a>
+      </div>
+    </header>
+
+    <!-- CLEAN CONTROL TOOLBAR -->
+    <nav class="control-toolbar">
+      <div class="tool-group">
+        <button id="btnPlay" class="btn btn-primary">
+          <span id="playIcon">▶</span> <span id="playText">RUN</span>
+        </button>
+        <button id="btnStep" class="btn btn-outline" title="Advance by 1 clock tick">
+          STEP (+1T)
+        </button>
+        <button id="btnReset" class="btn btn-ghost" title="Reset simulation">
+          RESET
+        </button>
+      </div>
+
+      <div class="tool-separator"></div>
+
+      <div class="tool-group">
+        <label for="selectAlgo" class="tool-label">ALGO</label>
+        <select id="selectAlgo" class="form-select">
+          <option value="mlfq" selected>MLFQ (Dynamic)</option>
+          <option value="rr">Round Robin</option>
+          <option value="pri">Preemptive Priority</option>
+          <option value="srtf">SRTF (Shortest Job)</option>
+        </select>
+      </div>
+
+      <div class="tool-group">
+        <label for="selectSpeed" class="tool-label">SPEED</label>
+        <select id="selectSpeed" class="form-select">
+          <option value="400">0.5x</option>
+          <option value="180" selected>1.0x</option>
+          <option value="80">2.5x</option>
+          <option value="20">10x</option>
+        </select>
+      </div>
+
+      <div class="tool-group">
+        <label for="selectWorkload" class="tool-label">PRESET</label>
+        <select id="selectWorkload" class="form-select">
+          <option value="mixed" selected>Standard Mixed (8 Procs)</option>
+          <option value="cpu_heavy">Compute Intensive</option>
+          <option value="extreme_starvation">Starvation Stress Test</option>
+          <option value="quick">Quick (4 Procs)</option>
+        </select>
+      </div>
+
+      <div class="tool-actions">
+        <button id="btnOpenAddModal" class="btn btn-ghost">+ ADD PROC</button>
+        <button id="btnRunBenchmark" class="btn btn-primary btn-compare">⚡ COMPARE (C-CORE)</button>
+      </div>
+    </nav>
+
+    <!-- HERO SECTION: CPU & GANTT TIMELINE -->
+    <section class="hero-exec-panel">
+      <!-- Active Core -->
+      <div class="cpu-stage">
+        <div class="stage-label">CPU CORE #0</div>
+        <div id="cpuRunningCard" class="core-slot">
+          <div class="core-idle-msg">IDLE</div>
+        </div>
+        <div class="core-submeta">
+          <span>BURST: <strong id="coreBurstRemaining">--</strong></span>
+          <span>QUANTUM: <strong id="coreQuantumRemaining">--</strong></span>
         </div>
       </div>
 
-      <div class="cpu-monitor-row">
-        <!-- CPU CORE CARD -->
-        <div class="cpu-core-box">
-          <div class="cpu-core-header">CPU CORE #0</div>
-          <div id="cpuRunningCard" class="cpu-core-body">
-            <div class="core-idle-msg">[ NO PROCESS RUNNING ]</div>
-          </div>
-          <div class="cpu-core-stats">
-            <div class="stat-pair">
-              <span class="label">BURST REMAINING:</span>
-              <span id="coreBurstRemaining" class="val">--</span>
+      <!-- Gantt Timeline -->
+      <div class="timeline-stage">
+        <div class="stage-header">
+          <span class="stage-label">GANTT TIMELINE</span>
+          <span id="ganttCursorTick" class="tick-indicator">TICK: 0</span>
+        </div>
+        <div id="ganttTimeline" class="gantt-track">
+          <!-- Dynamic tick blocks -->
+        </div>
+        <div id="ganttAxis" class="gantt-numbers">
+          <!-- Numbers -->
+        </div>
+      </div>
+    </section>
+
+    <!-- CLEAN TABS NAV (Eliminates Clutter) -->
+    <div class="view-tabs">
+      <button class="tab-btn active" data-tab="tab-queues">
+        <span>☷</span> MULTI-LEVEL QUEUES (MLFQ)
+      </button>
+      <button class="tab-btn" data-tab="tab-table">
+        <span>☰</span> PROCESS CONTROL TABLE (PCB)
+      </button>
+      <button class="tab-btn" data-tab="tab-telemetry">
+        <span>⚡</span> METRICS &amp; KERNEL LOG
+      </button>
+    </div>
+
+    <!-- TAB CONTENTS -->
+    <main class="tab-viewport">
+      <!-- TAB 1: QUEUES -->
+      <div id="tab-queues" class="tab-pane active">
+        <div class="pane-aging-banner">
+          ANTI-STARVATION RULE: Processes waiting &ge; 18 ticks automatically receive <strong>+2 Priority Boost</strong> and promotion to <strong>Queue 0</strong>.
+        </div>
+        <div id="mlfqQueuesContainer" class="mlfq-grid">
+          <div class="mlfq-column">
+            <div class="col-head">
+              <span class="col-title">Q0 &bull; HIGHEST</span>
+              <span class="col-badge">QUANTUM: 4T</span>
             </div>
-            <div class="stat-pair">
-              <span class="label">CURRENT QUANTUM:</span>
-              <span id="coreQuantumRemaining" class="val">--</span>
+            <div id="laneQ0" class="col-body"></div>
+          </div>
+          <div class="mlfq-column">
+            <div class="col-head">
+              <span class="col-title">Q1 &bull; MEDIUM-HIGH</span>
+              <span class="col-badge">QUANTUM: 8T</span>
             </div>
+            <div id="laneQ1" class="col-body"></div>
+          </div>
+          <div class="mlfq-column">
+            <div class="col-head">
+              <span class="col-title">Q2 &bull; MEDIUM-LOW</span>
+              <span class="col-badge">QUANTUM: 16T</span>
+            </div>
+            <div id="laneQ2" class="col-body"></div>
+          </div>
+          <div class="mlfq-column">
+            <div class="col-head">
+              <span class="col-title">Q3 &bull; LOWEST</span>
+              <span class="col-badge">QUANTUM: 32T</span>
+            </div>
+            <div id="laneQ3" class="col-body"></div>
           </div>
         </div>
 
-        <!-- REAL-TIME GANTT TIMELINE -->
-        <div class="gantt-container">
-          <div class="gantt-header-row">
-            <span class="gantt-title">TIMELINE TICKS (RECENT 40 TICKS)</span>
-            <span id="ganttCursorTick" class="gantt-cursor">TICK: 0</span>
+        <!-- Single Queue (for RR/PRI/SRTF) -->
+        <div id="singleQueueContainer" class="single-queue-panel" style="display:none;">
+          <div class="col-head">
+            <span class="col-title" id="singleQueueTitle">READY QUEUE</span>
+            <span class="col-badge" id="singleQueueMeta">ACTIVE</span>
           </div>
-          <div id="ganttTimeline" class="gantt-timeline">
-            <!-- Dynamic tick blocks generated via JS -->
-          </div>
-          <div id="ganttAxis" class="gantt-axis">
-            <!-- Tick labels -->
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ROW 2: MLFQ MULTI-LEVEL QUEUE INSPECTOR -->
-    <div class="grid-card card-mlfq">
-      <div class="card-header">
-        <div class="card-title">
-          <span class="icon-indicator">■</span>
-          <span id="queueViewTitle">MLFQ MULTI-LEVEL FEEDBACK QUEUES</span>
-        </div>
-        <div class="mlfq-aging-badge">
-          AGING TRIGGER: <strong>≥ 18 TICKS</strong> &rarr; <strong>+2 PRIORITY &rarr; PROMOTED TO Q0</strong>
+          <div id="singleQueueSlots" class="single-queue-body"></div>
         </div>
       </div>
 
-      <div id="mlfqQueuesContainer" class="mlfq-levels-container">
-        <!-- Level 0 -->
-        <div class="mlfq-lane" data-level="0">
-          <div class="lane-header">
-            <div class="lane-title">QUEUE 0 (HIGHEST)</div>
-            <div class="lane-meta">QUANTUM: 4T &bull; I/O &amp; AGED</div>
-          </div>
-          <div id="laneQ0" class="lane-slots">
-            <div class="empty-lane-hint">Empty</div>
-          </div>
-        </div>
-        <!-- Level 1 -->
-        <div class="mlfq-lane" data-level="1">
-          <div class="lane-header">
-            <div class="lane-title">QUEUE 1 (MED-HIGH)</div>
-            <div class="lane-meta">QUANTUM: 8T &bull; ADAPTIVE</div>
-          </div>
-          <div id="laneQ1" class="lane-slots">
-            <div class="empty-lane-hint">Empty</div>
-          </div>
-        </div>
-        <!-- Level 2 -->
-        <div class="mlfq-lane" data-level="2">
-          <div class="lane-header">
-            <div class="lane-title">QUEUE 2 (MED-LOW)</div>
-            <div class="lane-meta">QUANTUM: 16T &bull; DEMOTED</div>
-          </div>
-          <div id="laneQ2" class="lane-slots">
-            <div class="empty-lane-hint">Empty</div>
-          </div>
-        </div>
-        <!-- Level 3 -->
-        <div class="mlfq-lane" data-level="3">
-          <div class="lane-header">
-            <div class="lane-title">QUEUE 3 (LOWEST)</div>
-            <div class="lane-meta">QUANTUM: 32T &bull; CPU-HOGS</div>
-          </div>
-          <div id="laneQ3" class="lane-slots">
-            <div class="empty-lane-hint">Empty</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Single Ready Queue fallback for RR / PRI / SRTF -->
-      <div id="singleQueueContainer" class="single-queue-container" style="display:none;">
-        <div class="lane-header">
-          <div class="lane-title" id="singleQueueTitle">READY QUEUE</div>
-          <div class="lane-meta" id="singleQueueMeta">SORTED BY DYNAMIC PRIORITY</div>
-        </div>
-        <div id="singleQueueSlots" class="lane-slots">
-          <div class="empty-lane-hint">Empty</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ROW 3 LEFT: PROCESS STATE & PRIORITY METRICS TABLE -->
-    <div class="grid-card card-table">
-      <div class="card-header">
-        <div class="card-title">
-          <span class="icon-indicator">■</span> PROCESS CONTROL BLOCK (PCB) MONITOR
-        </div>
-        <div class="table-counts">
+      <!-- TAB 2: PROCESS TABLE -->
+      <div id="tab-table" class="tab-pane">
+        <div class="table-counts-bar">
           TOTAL: <strong id="cntTotal">0</strong> &bull;
           READY: <strong id="cntReady">0</strong> &bull;
-          I/O: <strong id="cntIo">0</strong> &bull;
-          DONE: <strong id="cntDone">0</strong>
+          I/O WAIT: <strong id="cntIo">0</strong> &bull;
+          FINISHED: <strong id="cntDone">0</strong>
         </div>
-      </div>
-      <div class="table-responsive">
-        <table class="pcb-table">
-          <thead>
-            <tr>
-              <th>PID</th>
-              <th>NAME</th>
-              <th>TYPE</th>
-              <th>ARRIVAL</th>
-              <th>BURST</th>
-              <th>REMAIN</th>
-              <th>PRI (DYN/STAT)</th>
-              <th>AGE (WAIT)</th>
-              <th>STARVATIONS</th>
-              <th>STATE</th>
-            </tr>
-          </thead>
-          <tbody id="pcbTableBody">
-            <!-- Dynamic rows -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ROW 3 RIGHT: ANTI-STARVATION & KERNEL LOG -->
-    <div class="grid-card card-telemetry">
-      <div class="card-header">
-        <div class="card-title">
-          <span class="icon-indicator">■</span> ANTI-STARVATION &amp; KERNEL TELEMETRY
+        <div class="table-wrap">
+          <table class="clean-table">
+            <thead>
+              <tr>
+                <th>PID</th>
+                <th>PROCESS NAME</th>
+                <th>TYPE</th>
+                <th>ARRIVAL</th>
+                <th>BURST</th>
+                <th>REMAIN</th>
+                <th>DYNAMIC / STATIC PRI</th>
+                <th>AGE (WAIT)</th>
+                <th>STARVATIONS</th>
+                <th>STATUS</th>
+              </tr>
+            </thead>
+            <tbody id="pcbTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <div class="telemetry-stats-grid">
-        <div class="telemetry-kpi">
-          <span class="kpi-label">STARVATION RESCUES</span>
-          <span id="kpiStarvations" class="kpi-val">0</span>
-          <span class="kpi-sub">Processes Aged &ge; 18 Ticks</span>
+      <!-- TAB 3: TELEMETRY & LOG -->
+      <div id="tab-telemetry" class="tab-pane">
+        <div class="telemetry-deck">
+          <div class="kpi-card">
+            <div class="kpi-num" id="kpiStarvations">0</div>
+            <div class="kpi-title">STARVATION RESCUES</div>
+            <div class="kpi-desc">Aged &ge; 18 Ticks</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-num" id="kpiBoosts">0</div>
+            <div class="kpi-title">AGING PROMOTIONS</div>
+            <div class="kpi-desc">+2 Priority Adjustments</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-num" id="kpiCpuUtil">0.0%</div>
+            <div class="kpi-title">CPU UTILIZATION</div>
+            <div class="kpi-desc">Core Active Ratio</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-num" id="kpiAvgTat">--</div>
+            <div class="kpi-title">AVG TURNAROUND</div>
+            <div class="kpi-desc">Completed Workload</div>
+          </div>
         </div>
-        <div class="telemetry-kpi">
-          <span class="kpi-label">DYNAMIC BOOSTS</span>
-          <span id="kpiBoosts" class="kpi-val">0</span>
-          <span class="kpi-sub">+2 Priority Adjustments</span>
-        </div>
-        <div class="telemetry-kpi">
-          <span class="kpi-label">CPU UTILIZATION</span>
-          <span id="kpiCpuUtil" class="kpi-val">0.0%</span>
-          <span class="kpi-sub">Active vs Total Ticks</span>
-        </div>
-        <div class="telemetry-kpi">
-          <span class="kpi-label">AVG TURNAROUND</span>
-          <span id="kpiAvgTat" class="kpi-val">--</span>
-          <span class="kpi-sub">Finished Processes</span>
-        </div>
-      </div>
 
-      <!-- KERNEL EVENT LOG -->
-      <div class="kernel-log-box">
-        <div class="log-header">
-          <span>KERNEL DISPATCH LOG</span>
-          <button id="btnClearLog" class="btn-text">CLEAR</button>
-        </div>
-        <div id="kernelLogEntries" class="log-entries">
-          <div class="log-line text-muted">[T=0] Kernel initialized. Ready for dispatch.</div>
+        <div class="log-card">
+          <div class="log-header">
+            <span>KERNEL LOG STREAM</span>
+            <button id="btnClearLog" class="btn-text">CLEAR</button>
+          </div>
+          <div id="kernelLogEntries" class="log-stream"></div>
         </div>
       </div>
-    </div>
-  </main>
+    </main>
+  </div>
 
   <!-- MODAL: ADD PROCESS -->
   <div id="modalAddProc" class="modal-backdrop" style="display:none;">
-    <div class="modal-window">
+    <div class="modal-box">
       <div class="modal-header">
-        <div class="modal-title">INJECT CUSTOM PROCESS INTO PCB</div>
+        <span class="modal-title">INJECT CUSTOM PROCESS</span>
         <button id="btnCloseAddModal" class="btn-close">&times;</button>
       </div>
-      <form id="formAddProc" class="modal-body">
-        <div class="form-row">
-          <div class="form-field">
-            <label for="inpProcName">PROCESS NAME</label>
-            <input type="text" id="inpProcName" class="form-input" value="Custom_Task" maxlength="16" required>
+      <form id="formAddProc" class="modal-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="inpProcName">NAME</label>
+            <input type="text" id="inpProcName" class="form-input" value="Custom_Proc" maxlength="16" required>
           </div>
-          <div class="form-field">
-            <label for="inpProcType">PROCESS BEHAVIOR</label>
+          <div class="form-group">
+            <label for="inpProcType">TYPE</label>
             <select id="inpProcType" class="form-select">
               <option value="MIXED">Mixed (Balanced)</option>
-              <option value="CPU">CPU-Bound (Long bursts)</option>
-              <option value="IO">I/O-Bound (Frequent yields)</option>
+              <option value="CPU">CPU-Bound</option>
+              <option value="IO">I/O-Bound</option>
             </select>
           </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-field">
-            <label for="inpCpuBurst">CPU BURST (TICKS)</label>
-            <input type="number" id="inpCpuBurst" class="form-input" min="1" max="60" value="14" required>
+          <div class="form-group">
+            <label for="inpCpuBurst">BURST (TICKS)</label>
+            <input type="number" id="inpCpuBurst" class="form-input" min="1" max="60" value="12" required>
           </div>
-          <div class="form-field">
+          <div class="form-group">
             <label for="inpArrivalTime">ARRIVAL TICK</label>
             <input type="number" id="inpArrivalTime" class="form-input" min="0" max="200" value="0" required>
           </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-field">
-            <label for="inpStaticPriority">STATIC PRIORITY (1=LOW, 10=HIGH)</label>
+          <div class="form-group">
+            <label for="inpStaticPriority">PRIORITY (1-10)</label>
             <input type="number" id="inpStaticPriority" class="form-input" min="1" max="10" value="5" required>
           </div>
-          <div class="form-field">
-            <label for="inpIoChance">I/O YIELD PROBABILITY (%)</label>
-            <input type="number" id="inpIoChance" class="form-input" min="0" max="90" value="30">
+          <div class="form-group">
+            <label for="inpIoChance">I/O YIELD (%)</label>
+            <input type="number" id="inpIoChance" class="form-input" min="0" max="90" value="25">
           </div>
         </div>
-
-        <div class="modal-footer">
-          <button type="button" id="btnCancelAddModal" class="btn btn-outline">CANCEL</button>
-          <button type="submit" class="btn btn-invert">INJECT PROCESS</button>
+        <div class="modal-actions">
+          <button type="button" id="btnCancelAddModal" class="btn btn-ghost">CANCEL</button>
+          <button type="submit" class="btn btn-primary">ADD TO RUNNING KERNEL</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: ALGORITHM COMPARISON BENCHMARK -->
+  <!-- MODAL: BENCHMARK MATRIX -->
   <div id="modalBenchmark" class="modal-backdrop" style="display:none;">
-    <div class="modal-window modal-lg">
+    <div class="modal-box modal-wide">
       <div class="modal-header">
-        <div class="modal-title">ALGORITHM BENCHMARK MATRIX (IDENTICAL WORKLOAD)</div>
+        <span class="modal-title">ALGORITHM BENCHMARK MATRIX</span>
         <button id="btnCloseBenchModal" class="btn-close">&times;</button>
       </div>
-      <div class="modal-body">
-        <p class="benchmark-desc">
-          Executes identical test workloads across all 4 scheduling engines and compares starvation prevention, turnaround times, and responsiveness.
+      <div class="modal-content">
+        <p class="modal-desc">
+          Executes identical workloads across all 4 scheduling algorithms using the <strong>native C backend (scheduler.exe)</strong> and dynamic priority simulator.
         </p>
-
-        <div class="benchmark-results">
-          <table class="pcb-table benchmark-table">
+        <div class="table-wrap">
+          <table class="clean-table">
             <thead>
               <tr>
                 <th>ALGORITHM</th>
-                <th>AVG WAIT TIME</th>
-                <th>AVG TURNAROUND</th>
+                <th>AVG WAIT</th>
+                <th>AVG TAT</th>
                 <th>CPU UTIL</th>
                 <th>STARVATIONS</th>
-                <th>AGING PROMOTIONS</th>
+                <th>PROMOTIONS</th>
                 <th>VERDICT</th>
               </tr>
             </thead>
-            <tbody id="benchmarkTableBody">
-              <!-- Filled via JS -->
-            </tbody>
+            <tbody id="benchmarkTableBody"></tbody>
           </table>
         </div>
-
-        <div class="benchmark-insights" id="benchmarkInsights">
-          <!-- Insights populated by JS -->
-        </div>
+        <div id="benchmarkInsights" class="insights-box"></div>
       </div>
-      <div class="modal-footer">
-        <button id="btnReRunBench" class="btn btn-outline">RE-RUN BENCHMARK</button>
-        <button id="btnCloseBenchBtn" class="btn btn-invert">CLOSE</button>
+      <div class="modal-actions">
+        <button id="btnRunCBench" class="btn btn-primary" style="margin-right:auto;">
+          ⚡ RUN NATIVE C BINARY (scheduler.exe)
+        </button>
+        <button id="btnReRunBench" class="btn btn-outline">RE-RUN</button>
+        <button id="btnCloseBenchBtn" class="btn btn-ghost">CLOSE</button>
       </div>
     </div>
   </div>
 
-  <footer class="sys-footer">
-    <div class="footer-left">
-      <span>SMART CPU SCHEDULER &bull; PURE C ENGINE WITH DYNAMIC PRIORITY ADJUSTMENT</span>
-    </div>
-    <div class="footer-right">
-      <span>OSSP HACKATHON &bull; HIGH-CONTRAST B&amp;W TERMINAL LUX</span>
-    </div>
-  </footer>
-
-  <script src="app.js"></script>
+  <script src="app.js?v=3.1"></script>
 </body>
 </html>
